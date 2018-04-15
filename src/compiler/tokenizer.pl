@@ -1,3 +1,8 @@
+% @authors {Harshitha}
+% @purpose Tokenizer with space, newline and end of file delimiters
+% @version 1
+% @data 04/14/2018
+
 % Read the program from a file and returns the list of tokens
 tokenizer(FileName, Tokens) :- open(FileName, read, InStream),
                       readTokens(InStream, Tokens),
