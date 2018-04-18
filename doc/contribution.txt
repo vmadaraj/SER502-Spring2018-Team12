@@ -1,4 +1,4 @@
-Milestone - 2
+MILESTONE - 2
 
 Team member 1 - Harshitha Katpally
 Worked on writing the grammar rules for expressions and functions.
@@ -13,9 +13,9 @@ Team member 4 - Venkata Sai Shirisha Kakarla
 Worked on designing the language and came up with regular expressions for data types and identifiers.
 
 The language name, programming paradigm and the language being used to compile and execute our language has been collectively decided after a debate.
+============================================================================================
 
-
-Milestone - 3(Tentative plan)
+MILESTONE - 3(TENTATIVE PLAN)
 
 Team member 1 - Harshitha Katpally
 Will work on tokenizing the input program which will be the input for the parser.
@@ -25,3 +25,21 @@ Will work on generating the parse tree from the tokens sent by the lexical analy
 
 Team member 3 and 4 - Venkata Akhil Madaraju, Venkata Sai Shirisha Kakarla
 Will work on developing the interpreter that will parse the parse tree and return the output of the program.
+============================================================================================
+
+WORK PROGRESS
+
+Team member 1 - Harshitha Katpally
+Implemented the tokenizer with space, newline and endofFile
+
+Team member 4 - Venkata Sai Shirisha Kakarla
+Implemented the complete tokenizer
+
+Team member 2 - Divya Yadamreddi
+Implemented reading the program form the txt file and tokenizing it
+
+Team member 3 - Venkata Akhil Madaraju
+Started the functionality of Parser and implemented it partially
+
+
+ 
