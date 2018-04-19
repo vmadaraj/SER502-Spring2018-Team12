@@ -42,7 +42,7 @@ getWord([CharCode | RemCodes], alnum, [CharCode], RemCodes).
 % and returns a parse tree
 
 parser(t_parser(X)) --> program(X).
-
+program(t_program(X, Y)) --> comment(X), ["begin"], block(Y), ["end"], !.
 program(t_program(X)) --> ["begin"], block(X), ["end"].
 
 block(t_block(X)) --> declaration(X),[";"].
@@ -73,6 +73,9 @@ term(t_exp(X)) --> factor(X).
 factor(t_exp(X)) --> ["("], expression(X), [")"].
 factor(t_exp(X)) --> identifier(X).
 factor(t_exp(X)) --> data(X).
+
+% Rule for comment
+comment(t_comment(C)) --> ["#"], [C], {string(C)}.
 
 % Rules for datatype
 datatype(t_datatype(int)) --> ["int"].
