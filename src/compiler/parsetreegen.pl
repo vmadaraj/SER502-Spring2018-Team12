@@ -42,16 +42,22 @@ getWord([CharCode | RemCodes], alnum, [CharCode], RemCodes).
 % and returns a parse tree
 
 parser(t_parser(X)) --> program(X).
-program(t_program(X, Y)) --> comment(X), ["begin"], block(Y), ["end"], !.
-program(t_program(X)) --> ["begin"], block(X), ["end"].
+program(t_commentprog(X, Y)) --> comment(X), ["begin"], block(Y), [";"], ["end"], !.
+program(t_program(X)) --> ["begin"], block(X), [";"], ["end"].
 
-block(t_block(X)) --> declaration(X),[";"].
-block(t_block(X, Y)) --> declaration(X), [";"], statements(Y), [";"].
+block(t_block(X, Y)) --> allblocks(X), [";"], block(Y).
+block(t_block(X)) --> allblocks(X).
+allblocks(t_printblock(X)) --> printstatement(X).
+allblocks(t_declarationblock(X)) --> declaration(X).
+allblocks(t_statementsblock(X)) --> statements(X).
 
 % Rules for statements
 statements(t_statements(X, Y)) --> allstatements(X), [";"], statements(Y).
 statements(t_statements(X)) --> allstatements(X).
-allstatements(t_allstatements(X)) --> assign(X).
+allstatements(t_printstatement(X)) --> printstatement(X).
+allstatements(t_assign(X)) --> assign(X).
+allstatements(t_ifelseBlock(X)) --> ifelse(X).
+allstatements(t_whileBlock(X)) --> while(X).
 
 % Rules for declarations
 declaration(t_declaration(X, Y)) --> declarationtemp(X), [";"], declaration(Y).
@@ -62,17 +68,54 @@ declarationtemp(t_variable(X, Y)) --> datatype(X), identifier(Y).
 % Rules for assignment and expressions
 assign(t_assignment(X, Y)) --> identifier(X), ["="], expression(Y).
 
-expression(t_exp(X, Y)) --> term(X), ["+"], expression(Y).
-expression(t_exp(X, Y)) --> term(X), ["-"], expression(Y).
+expression(t_add(X, Y)) --> term(X), ["+"], expression(Y).
+expression(t_sub(X, Y)) --> term(X), ["-"], expression(Y).
 expression(t_exp(X)) --> term(X).
 
-term(t_exp(X, Y)) --> factor(X), ["*"], term(Y).
-term(t_exp(X, Y)) --> factor(X), ["/"], term(Y).
+term(t_mul(X, Y)) --> factor(X), ["*"], term(Y).
+term(t_div(X, Y)) --> factor(X), ["/"], term(Y).
 term(t_exp(X)) --> factor(X).
 
-factor(t_exp(X)) --> ["("], expression(X), [")"].
-factor(t_exp(X)) --> identifier(X).
-factor(t_exp(X)) --> data(X).
+factor(t_bracket(X)) --> ["("], expression(X), [")"].
+factor(t_id(X)) --> identifier(X).
+factor(t_data(X)) --> data(X).
+
+% Rules for if-else
+ifelse(t_if(X, If)) --> ["if"], ["("], condition(X), [")"],
+["{"], statements(If), [";"], ["}"].
+ifelse(t_ifelse(X,If,Else)) --> ["if"], ["("], condition(X), [")"],
+["{"], statements(If), [";"], ["}"],
+["else"], ["{"], statements(Else), [";"], ["}"].
+
+% Rules for while
+while(t_while(X,While)) --> ["while"], ["("],condition(X), [")"],
+["{"] , statements(While), [";"], ["}"].
+
+% Rules for condition
+condition(t_singlecond(X, Y, Z)) --> identifier(X), comparision(Y), expression(Z).
+condition(t_multiplecond(X, Y, Z, P, Q)) --> identifier(X), comparision(Y), expression(Z),
+condop(P), condition(Q).
+condition(t_notcondition(X, Y, Z, P)) --> condnot(X), identifier(Y),
+comparision(Z), expression(P).
+condition(t_condition(true)) --> ["true"].
+condition(t_condition(false)) --> ["false"].
+
+% Rules for comparision
+comparision(t_compare(>)) --> [">"].
+comparision(t_compare(<)) --> ["<"].
+comparision(t_compare(>=)) --> [">"], ["="].
+comparision(t_compare(<=)) --> ["<"], ["="].
+comparision(t_compare(==)) --> ["="], ["="].
+
+% Rules for conditional operators
+condop(t_condop(and)) --> ["and"].
+condop(t_condop(or)) --> ["or"].
+condnot(t_condnot(not)) -->["not"].
+
+% Rules for print
+printstatement(t_print(X)) --> [print], identifier(X), !.
+printstatement(t_print(X)) --> [print], [X], {string(X)}, !.
+printstatement(t_print(X, Y)) --> [print], [X], {string(X)}, ["+"], identifier(Y), !.
 
 % Rule for comment
 comment(t_comment(C)) --> ["#"], [C], {string(C)}.
@@ -87,12 +130,11 @@ datatype(t_datatype(string)) --> ["string"].
 identifier(t_identifier(I)) --> [I], {string(I)}.
 
 % Rules for numbers
-data(t_integer(N)) --> [N], {re_match("^[0-9]+$", N)}, !.
-data(t_float(F)) --> [F], {re_match("^[0-9]+.[0-9]+$", F)}, !.
+data(t_integer(N)) --> [N], {re_match("^[0-9]+", N)}, !.
+data(t_float(F)) --> [F], {re_match("^[0-9]+.[0-9]+", F)}, !.
 data(t_string(S)) --> [S], {string(S)}.
 data(t_bool(true)) --> ["true"].
 data(t_bool(false)) --> ["false"].
-
 
 
 
