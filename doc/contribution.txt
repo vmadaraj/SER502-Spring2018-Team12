@@ -30,16 +30,19 @@ Will work on developing the interpreter that will parse the parse tree and retur
 WORK PROGRESS
 
 Team member 1 - Harshitha Katpally
-Implemented the tokenizer with space, newline and endofFile
+1.Implemented the tokenizer with space, newline and endofFile.
+2.Parser corrected with functionalities and started working on ppt.
 
 Team member 4 - Venkata Sai Shirisha Kakarla
-Implemented the complete tokenizer
+1.Implemented the complete tokenizer.
+2.Started woking on Interpreter.
 
 Team member 2 - Divya Yadamreddi
-Implemented reading the program form the txt file and tokenizing it
+1.Implemented reading the program form the txt file and tokenizing it.
+2.Completed Parser implementation and added few Interpreter functionalities.
 
 Team member 3 - Venkata Akhil Madaraju
-Started the functionality of Parser and implemented it partially
-
+1.Started the functionality of Parser and implemented it partially.
+2.Added more functionalities to interpreter and corrected some errors.
 
  
