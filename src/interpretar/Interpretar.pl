@@ -1,9 +1,59 @@
 % @authors {Shirisha}, @version 1.0
-% @authors {Shirisha}, @version 1.1
-% @purpose Interpretar
+% @authors {Divya Yadamreddi}, @version 1.1
+% @purpose Interpreter
 % @date 04/22/2018
 
+lookup(_,[],0).
 
+lookup(X,[(X, V)|_],V).
+
+lookup(X,[_|T],V) :- lookup(X,T,V).
+
+
+
+update(X,V,[],[(X,V)]).
+
+update(X,V,[(X,_)|T],[(X,V)|T]).
+
+update(X,V,[H|T],[H|T1]) :- update(X,V,T,T1).
+
+
+
+evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
+
+
+
+evalProgram(t_commentprog(_, Y), EnvIn, EnvOut) :- evalBlock(Y, EnvIn, EnvOut).
+
+evalProgram(t_program(X), EnvIn, EnvOut) :- evalBlock(X, EnvIn, EnvOut).
+
+
+
+evalBlock(t_block(X), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut).
+
+evalBlock(t_blockstatements(X, Y), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut), evalStatements(Y, EnvIn, EnvOut).
+
+
+
+evalDeclaration(t_declaration(X), EnvIn, EnvOut) :- evalDeclarationTemp(X, EnvIn, EnvOut).
+
+evalDeclaration(t_declaration(X, Y), EnvIn, EnvOut) :- evalDeclarationTemp(X, EnvIn, EnvOut), evalDeclaration(Y).
+
+evalDeclarationTemp(t_constant(_,Y,Z), EnvIn, EnvOut) :- update(Y, Z, EnvIn, EnvOut).
+
+evalDeclarationTemp(t_variable(_), EnvIn, EnvOut).
+
+
+
+evalStatements(t_statements(X), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvOut).
+
+evalStatements(t_statements(X,Y), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvOut), evalStatements(Y, EnvIn, EnvOut).
+
+evalAllStatements(t_assign(X), EnvIn, EnvOut) :- evalAssign(X, EnvIn, EnvOut).
+
+evalAllStatements(t_ifelseBlock(X), EnvIn, EnvOut) :- evalIfelse(X, EnvIn, EnvOut).
+
+evalAllStatements(t_whileBlock(X), EnvIn, EnvOut) :- evalWhile(X, EnvIn, EnvOut).
 evalAssign(t_assignment(X,Y), EnvIn, EnvOut) :- evalExpression(Y, Output, EnvIn, EnvOut), update(X, Output, EnvIn, EnvOut).
 
 
