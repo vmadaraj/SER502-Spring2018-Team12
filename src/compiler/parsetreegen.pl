@@ -58,6 +58,8 @@ allstatements(t_printstatement(X)) --> printstatement(X).
 allstatements(t_assign(X)) --> assign(X).
 allstatements(t_ifelseBlock(X)) --> ifelse(X).
 allstatements(t_whileBlock(X)) --> while(X).
+allstatements(t_functioncallstatement(X)) --> functioncall(X).
+
 
 % Rules for declarations
 declaration(t_declaration(X, Y)) --> declarationtemp(X), [";"], declaration(Y).
@@ -65,9 +67,13 @@ declaration(t_declaration(X)) --> declarationtemp(X).
 declarationtemp(t_constant(X, Y, Z)) --> datatype(X), identifier(Y), ["="], data(Z).
 declarationtemp(t_variable(X, Y)) --> datatype(X), identifier(Y).
 
-% Rules for assignment and expressions
-assign(t_assignment(X, Y)) --> identifier(X), ["="], expression(Y).
+% Rules for assignment
+assign(t_assignment(X, Y)) --> allassign(X), [";"], assign(Y).
+assign(t_assignment(X)) --> allassign(X).
+allassign(t_allassignment(X, Y)) --> identifier(X), ["="], expression(Y).
+allassign(t_allassignment(X, Y)) --> identifier(X), ["="], functioncall(Y).
 
+% Rules for expressions
 expression(t_add(X, Y)) --> term(X), ["+"], expression(Y).
 expression(t_sub(X, Y)) --> term(X), ["-"], expression(Y).
 expression(t_exp(X)) --> term(X).
@@ -90,6 +96,24 @@ ifelse(t_ifelse(X,If,Else)) --> ["if"], ["("], condition(X), [")"],
 % Rules for while
 while(t_while(X,While)) --> ["while"], ["("],condition(X), [")"],
 ["{"] , statements(While), [";"], ["}"].
+
+% Rules for function call
+functioncall(t_functioncall(X, Y)) --> identifier(X), ["("], parameters(Y), [")"].
+
+% Rules for function declaration
+function(t_function(X, Y, Z, P)) --> ["function"], datatype(X), identifier(Y), ["("],
+															  arguments(Z), [")"], ["{"], statements(P), ["}"].
+
+% Rules for arguments
+arguments(t_arguments(X, Y)) --> allarguments(X), [","], arguments(Y).
+arguments(t_arguments(X)) --> allarguments(X).
+allarguments(t_allarguments(X, Y)) --> datatype(X), identifier(Y).
+
+% Rules for parameters
+parameters(t_parameters(X, Y)) --> allparameters(X), [","], parameters(Y).
+parameters(t_parameters(X)) --> allparameters(X).
+allparameters(t_allparameters(X)) --> identifier(X).
+allparameters(t_allparameters(X)) --> data(X).
 
 % Rules for condition
 condition(t_singlecond(X, Y, Z)) --> identifier(X), comparision(Y), expression(Z).
@@ -135,7 +159,3 @@ data(t_float(F)) --> [F], {re_match("^[0-9]+.[0-9]+", F)}, !.
 data(t_string(S)) --> [S], {string(S)}.
 data(t_bool(true)) --> ["true"].
 data(t_bool(false)) --> ["false"].
-
-
-
-
