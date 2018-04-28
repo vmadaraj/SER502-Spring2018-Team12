@@ -5,39 +5,42 @@
 % @date 04/17/2018
 
 % Read the program from a file and returns the parse tree
-arrow(FileName) :- open(FileName, read, InStream),
-							   	 tokenCodes(InStream, TokenCodes),
-                 	 tokenize(TokenCodes, Tokens),
-                 	 parser(ParseTree, Tokens, []),
-                 	 close(InStream),
-							   	 open('output.ic',write, OutStream),
-							   	 write(OutStream, ParseTree),
-								 	 write(OutStream, '.'),
-							   	 close(OutStream).
+arrow(FileName) :- 	open(FileName, read, InStream),
+					tokenCodes(InStream, TokenCodes),
+					tokenize(TokenCodes, Tokens),
+					parser(ParseTree, Tokens, []),
+					close(InStream),
+					split_string(FileName, ".", "", L),
+					L = [H|_T],
+					atom_concat(H, ".ic", X),
+					open(X, write, OutStream),
+					write(OutStream, ParseTree),
+					write(OutStream, '.'),
+					close(OutStream).
 
 
 % Return list of token codes to tokenizer
-tokenCodes(InStream,[]) :- at_end_of_stream(InStream), !.
+tokenCodes(InStream,[]) :- 	at_end_of_stream(InStream), !.
 tokenCodes(InStream, [TokenCode | RemTokens]) :- get_code(InStream, TokenCode),
                                                  tokenCodes(InStream, RemTokens).
 
 % Returns one token at a time
 tokenize([], []).
 tokenize([CharCode | RemCodes], Tokens) :- char_type(CharCode, space), !,
-										   										 tokenize(RemCodes, Tokens).
-tokenize([CharCode | CharCodes], [WordString | Tokens]) :- char_type(CharCode, alnum), !,
-													 getWord([CharCode | CharCodes], alnum, WordCodes, RemCodes),
-													 name(Word, WordCodes), atom_string(Word, WordString),
-													 tokenize(RemCodes, Tokens).
+										   tokenize(RemCodes, Tokens).
+tokenize([CharCode | CharCodes], [WordString | Tokens]) :- 	char_type(CharCode, alnum), !,
+															getWord([CharCode | CharCodes], alnum, WordCodes, RemCodes),
+															name(Word, WordCodes), atom_string(Word, WordString),
+															tokenize(RemCodes, Tokens).
 tokenize([CharCode | CharCodes], [CharString | Tokens]) :- !, name(Char, [CharCode]),
                                                            atom_string(Char, CharString),
-													       									 				 tokenize(CharCodes, Tokens).
+													       tokenize(CharCodes, Tokens).
 
 % Checks if next character is new line or space or end of file and returns token
 % upto that point
 getWord([CharCode1, CharCode2 | CharCodes], alnum, [CharCode1 | WordCodes], RemCodes) :-
-													char_type(CharCode2, alnum), !,
-													getWord([CharCode2 | CharCodes], alnum, WordCodes, RemCodes).
+				char_type(CharCode2, alnum), !,
+				getWord([CharCode2 | CharCodes], alnum, WordCodes, RemCodes).
 getWord([CharCode | RemCodes], alnum, [CharCode], RemCodes).
 
 
