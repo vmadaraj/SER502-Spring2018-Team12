@@ -300,5 +300,3 @@ evalData(t_float(X), Output, EnvIn, EnvIn) :- Output is X.
 evalData(t_string(X), Output, EnvIn, EnvIn) :- Output = X.
 
 evalData(t_bool(X), Output, EnvIn, EnvIn) :- Output = X.
-
-
