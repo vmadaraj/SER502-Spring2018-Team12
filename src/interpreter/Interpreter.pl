@@ -49,4 +49,51 @@ evalIfelse(t_ifelse(X, If, Else), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, Env
 																											evalStatements(Else, EnvIn, EnvOut).
 
 evalWhile(t_while(X, While), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(While, EnvIn2, EnvIn3), evalWhile(t_while(X,While), EnvIn3, EnvOut));
+
+
 																								EnvOut = EnvIn.
+
+
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareEqual(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut =:= NExp) -> !; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareLess(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut < NExp) -> ! ; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareGreater(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut > NExp) -> !; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareGE(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut >= NExp) -> !; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareLE(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut =< NExp) -> !; !,false).
+
+
+
