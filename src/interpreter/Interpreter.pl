@@ -6,7 +6,7 @@
 
 %interpreter(FileName) :-  Env = [], write(FileName), evalParser(FileName, Env, EnvOut), write(" "), write(EnvOut), !.
 runArrow(FileName) :- open(FileName, read, InStream), read(InStream, X),
- 											   close(InStream), Env = [], evalParser(X, Env, EnvOut), write(X).
+ 		      close(InStream), Env = [], evalParser(X, Env, EnvOut).
 
 evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
 
@@ -38,21 +38,21 @@ evalAllStatements(t_declarationStatement(X), EnvIn, EnvOut) :- evalDeclaration(X
 
 % Rules to evaluate declaration statement.
 evalDeclaration(t_singleDeclaration(X, Y, Z), EnvIn, EnvOut) :- evalDatatype(X, EnvIn, EnvIn1), evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2),
-														 																		evalData(Z, DataOutput, EnvIn3, EnvOut), update(IdName, DataOutput, EnvIn2, EnvIn3).
+								evalData(Z, DataOutput, EnvIn3, EnvOut), update(IdName, DataOutput, EnvIn2, EnvIn3).
 evalDeclaration(t_singleDeclaration(X, Y), EnvIn, EnvOut) :- evalDatatype(X, EnvIn, EnvIn1),
-																														 evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2), update(IdName, 0, EnvIn2, EnvOut).
+	 						     evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2), update(IdName, 0, EnvIn2, EnvOut).
 
 % Rules to assign values to variables.
 evalAssign(t_expAssignment(X,Y), EnvIn, EnvOut) :- evalIdentifier(X, _, IdName, EnvIn, EnvIn2),
-																									evalExpression(Y, Output, EnvIn2, EnvIn3), update(IdName, Output, EnvIn3, EnvOut).
+						   evalExpression(Y, Output, EnvIn2, EnvIn3), update(IdName, Output, EnvIn3, EnvOut).
 
 % Rules to evaluate if-else statements.
 evalIfelse(t_if(X, Y), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(Y, EnvIn2, EnvOut)); EnvOut = EnvIn.
 evalIfelse(t_ifelse(X, If, Else), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(If, EnvIn2, EnvOut));
-																											evalStatements(Else, EnvIn, EnvOut).
+						    evalStatements(Else, EnvIn, EnvOut).
 evalIfelse(t_ifelseif(X, If, Y, Else), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(If, EnvIn2, EnvOut));
-																												 (evalElseifLoop(Y, EnvIn, EnvOut), !);
-																												 (evalStatements(Else, EnvIn, EnvOut)).
+							 (evalElseifLoop(Y, EnvIn, EnvOut), !);
+							 (evalStatements(Else, EnvIn, EnvOut)).
 
 evalElseifLoop(t_elseifLoop(X), EnvIn, EnvOut) :- evalElseifLoop1(X, EnvIn, EnvOut).
 evalElseifLoop(t_elseifLoop(X, Y), EnvIn, EnvOut) :- (evalElseifLoop1(X, EnvIn, EnvOut) -> !); evalElseifLoop(Y, EnvIn, EnvOut).
@@ -60,7 +60,7 @@ evalElseifLoop1(t_elseifSingle(X, Elseif), EnvIn, EnvOut) :- (evalCondition(X, E
  																												 																											
 % Rules to evaluate while loop.
 evalWhile(t_while(X, While), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(While, EnvIn2, EnvIn3), evalWhile(t_while(X,While), EnvIn3, EnvOut));
-																								EnvOut = EnvIn.
+						EnvOut = EnvIn.
 
 % Rules to evaluate conditions.
 % Boolean conditions.
@@ -69,143 +69,142 @@ evalCondition(t_condition(false), EnvIn, EnvIn) :- false.
 
 % Single conditions.
 evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																											 evalCompareEqual(Y),
+						       evalCompareEqual(Y),
                                                        evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
-																											 atom_string(IdOutput, Qstring),
-																											 atom_number(Qstring, NIdOut),
-																											 atom_string(ExpOutput, QExp),
-																											 atom_number(QExp, NExp),
-																											 ((NIdOut =:= NExp) -> !; !,false).
+						       atom_string(IdOutput, Qstring),
+						       atom_number(Qstring, NIdOut),
+						       atom_string(ExpOutput, QExp),
+						       atom_number(QExp, NExp),
+						       ((NIdOut =:= NExp) -> !; !,false).
 evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																											 evalCompareLess(Y),
+						       evalCompareLess(Y),
                                                        evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
-																											 atom_string(IdOutput, Qstring),
-																											 atom_number(Qstring, NIdOut),
-																											 atom_string(ExpOutput, QExp),
-																											 atom_number(QExp, NExp),
-																											 ((NIdOut < NExp) -> ! ; !,false).
+						       atom_string(IdOutput, Qstring),
+						       atom_number(Qstring, NIdOut),
+						       atom_string(ExpOutput, QExp),
+						       atom_number(QExp, NExp),
+						       ((NIdOut < NExp) -> ! ; !,false).
 evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																											 evalCompareGreater(Y),
+						       evalCompareGreater(Y),
                                                        evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
-																											 atom_string(IdOutput, Qstring),
-																											 atom_number(Qstring, NIdOut),
-																											 atom_string(ExpOutput, QExp),
-																											 atom_number(QExp, NExp),
-																											 ((NIdOut > NExp) -> !; !,false).
+						       atom_string(IdOutput, Qstring),
+						       atom_number(Qstring, NIdOut),
+						       atom_string(ExpOutput, QExp),
+						       atom_number(QExp, NExp),
+						       ((NIdOut > NExp) -> !; !,false).
 evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																											 evalCompareGE(Y),
+						       evalCompareGE(Y),
                                                        evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
-																											 atom_string(IdOutput, Qstring),
-																											 atom_number(Qstring, NIdOut),
-																											 atom_string(ExpOutput, QExp),
-																											 atom_number(QExp, NExp),
-																											 ((NIdOut >= NExp) -> !; !,false).
+						       atom_string(IdOutput, Qstring),
+						       atom_number(Qstring, NIdOut),
+						       atom_string(ExpOutput, QExp),
+						       atom_number(QExp, NExp),
+						       ((NIdOut >= NExp) -> !; !,false).
 evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																											 evalCompareLE(Y),
+						       evalCompareLE(Y),
                                                        evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
-																											 atom_string(IdOutput, Qstring),
-																											 atom_number(Qstring, NIdOut),
-																											 atom_string(ExpOutput, QExp),
-																											 atom_number(QExp, NExp),
-																											 ((NIdOut =< NExp) -> !; !,false).
+						       atom_string(IdOutput, Qstring),
+						       atom_number(Qstring, NIdOut),
+						       atom_string(ExpOutput, QExp),
+						       atom_number(QExp, NExp),
+						       ((NIdOut =< NExp) -> !; !,false).
 
 % not condition.																									 
 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																														evalNot(N), evalCompareEqual(Z),
+							    evalNot(N), evalCompareEqual(Z),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-																														atom_string(IdOutput, Qstring),
-		 																											  atom_number(Qstring, NIdOut),
-		 																											  atom_string(ExpOutput, QExp),
-		 																											  atom_number(QExp, NExp),
+							    atom_string(IdOutput, Qstring),
+		 					    atom_number(Qstring, NIdOut),
+		 					    atom_string(ExpOutput, QExp),
+		 					    atom_number(QExp, NExp),
                                                             ((NIdOut \= NExp) -> !; !,false).
 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																														evalNot(N), evalCompareGreater(Z),
+							    evalNot(N), evalCompareGreater(Z),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-																														atom_string(IdOutput, Qstring),
-		 																											  atom_number(Qstring, NIdOut),
-		 																											  atom_string(ExpOutput, QExp),
-		 																											  atom_number(QExp, NExp),
+							    atom_string(IdOutput, Qstring),
+		 					    atom_number(Qstring, NIdOut),
+		 					    atom_string(ExpOutput, QExp),
+		 					    atom_number(QExp, NExp),
                                                             ((NIdOut =< NExp) ->!; !,false).
 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																														evalNot(N), evalCompareLess(Z),
+							    evalNot(N), evalCompareLess(Z),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-																														atom_string(IdOutput, Qstring),
-		 																											  atom_number(Qstring, NIdOut),
-		 																											  atom_string(ExpOutput, QExp),
-		 																											  atom_number(QExp, NExp),
+							    atom_string(IdOutput, Qstring),
+		 					    atom_number(Qstring, NIdOut),
+		 					    atom_string(ExpOutput, QExp),
+		 					    atom_number(QExp, NExp),
                                                             ((NIdOut >= NExp) -> !; !,false).
 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																														evalNot(N), evalCompareGE(Z),
+							    evalNot(N), evalCompareGE(Z),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-																														atom_string(IdOutput, Qstring),
-		 																											  atom_number(Qstring, NIdOut),
-		 																											  atom_string(ExpOutput, QExp),
-		 																											  atom_number(QExp, NExp),
+							    atom_string(IdOutput, Qstring),
+		 					    atom_number(Qstring, NIdOut),
+		 					    atom_string(ExpOutput, QExp),
+		 					    atom_number(QExp, NExp),
                                                             ((NIdOut < NExp) -> !, !,false).
 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																														evalNot(N), (evalCompareLE(Z) -> !),
+							    evalNot(N), (evalCompareLE(Z) -> !),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-																														atom_string(IdOutput, Qstring),
-		 																											  atom_number(Qstring, NIdOut),
-		 																											  atom_string(ExpOutput, QExp),
-		 																											  atom_number(QExp, NExp),
+							    atom_string(IdOutput, Qstring),
+		 					    atom_number(Qstring, NIdOut),
+		 					    atom_string(ExpOutput, QExp),
+		 					    atom_number(QExp, NExp),
                                                             ((NIdOut > NExp) -> !; !,false).
-
 
 % Multiple conditions.
 % with 'and'                                                                                                                   
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-																															 evalAnd(O), evalCompareGE(S),
-																															 atom_string(IdOutput, Qstring),
-				 																											 atom_number(Qstring, NIdOut),
-				 																											 atom_string(ExpOutput, QExp),
-				 																											 atom_number(QExp, NExp),
+							       evalAnd(O), evalCompareGE(S),
+							       atom_string(IdOutput, Qstring),
+				 			       atom_number(Qstring, NIdOut),
+				 			       atom_string(ExpOutput, QExp),
+				 			       atom_number(QExp, NExp),
                                                                ((NIdOut >= NExp) -> evalCondition(Z, EnvIn3, EnvOut); !,false).
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-																															 evalAnd(O), evalCompareLE(S),
-																															 atom_string(IdOutput, Qstring),
-				 																											 atom_number(Qstring, NIdOut),
-				 																											 atom_string(ExpOutput, QExp),
-				 																											 atom_number(QExp, NExp),
+							       evalAnd(O), evalCompareLE(S),
+							       atom_string(IdOutput, Qstring),
+				 			       atom_number(Qstring, NIdOut),
+				 			       atom_string(ExpOutput, QExp),
+				 			       atom_number(QExp, NExp),
                                                                ((NIdOut =< NExp) -> evalCondition(Z, EnvIn3, EnvOut); !,false).
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-																															 evalAnd(O), evalCompareEqual(S),
-																															 atom_string(IdOutput, Qstring),
-				 																											 atom_number(Qstring, NIdOut),
-				 																											 atom_string(ExpOutput, QExp),
-				 																											 atom_number(QExp, NExp),
+							       evalAnd(O), evalCompareEqual(S),
+						   	       atom_string(IdOutput, Qstring),
+				 			       atom_number(Qstring, NIdOut),
+				 			       atom_string(ExpOutput, QExp),
+				 			       atom_number(QExp, NExp),
                                                                ((NIdOut =:= NExp) -> evalCondition(Z, EnvIn3, EnvOut); !,false).
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-																															 evalAnd(O), evalCompareGreater(S),
-																															 atom_string(IdOutput, Qstring),
-				 																											 atom_number(Qstring, NIdOut),
-				 																											 atom_string(ExpOutput, QExp),
-				 																											 atom_number(QExp, NExp),
+							       evalAnd(O), evalCompareGreater(S),
+							       atom_string(IdOutput, Qstring),
+				 			       atom_number(Qstring, NIdOut),
+				 			       atom_string(ExpOutput, QExp),
+				 			       atom_number(QExp, NExp),
                                                                ((NIdOut > NExp) -> evalCondition(Z, EnvIn3, EnvOut); !,false).
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-																															 evalAnd(O), evalCompareLess(S),
-																															 atom_string(IdOutput, Qstring),
-				 																											 atom_number(Qstring, NIdOut),
-				 																											 atom_string(ExpOutput, QExp),
-				 																											 atom_number(QExp, NExp),
+							       evalAnd(O), evalCompareLess(S),
+							       atom_string(IdOutput, Qstring),
+				 			       atom_number(Qstring, NIdOut),
+				 			       atom_string(ExpOutput, QExp),
+				 			       atom_number(QExp, NExp),
                                                                ((NIdOut < NExp) -> evalCondition(Z, EnvIn3, EnvOut); !,false).
 
 % with 'or'                                                                                                                                   
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																															 evalOr(O), evalCompareLess(S),
+							       evalOr(O), evalCompareLess(S),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
                                                                atom_string(IdOutput, Qstring),
-				 																											 atom_number(Qstring, NIdOut),
-				 																											 atom_string(ExpOutput, QExp),
-				 																											 atom_number(QExp, NExp), % write("id: "), write(NIdOut), write(" Exp: "), write(NExp), 
+				 			       atom_number(Qstring, NIdOut),
+				 			       atom_string(ExpOutput, QExp),
+				 			       atom_number(QExp, NExp), % write("id: "), write(NIdOut), write(" Exp: "), write(NExp), 
                                                                ((NIdOut < NExp) -> !, EnvOut = EnvIn; evalCondition(Z, EnvIn3, EnvOut)).
 evalCondition(t_multiplecond(X, S, Y, O, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
-																															 evalOr(O), evalCompareLE(S),
+									 evalOr(O), evalCompareLE(S),
                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
                                                                atom_string(IdOutput, Qstring),
 				 																											 atom_number(Qstring, NIdOut),
