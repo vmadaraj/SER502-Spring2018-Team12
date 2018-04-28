@@ -5,11 +5,16 @@
 % @date 04/17/2018
 
 % Read the program from a file and returns the parse tree
-parseTreeGen(FileName, ParseTree) :- open(FileName, read, InStream),
+arrow(FileName) :- open(FileName, read, InStream),
 							   tokenCodes(InStream, TokenCodes),
-                               tokenize(TokenCodes, Tokens),
-                               parser(ParseTree, Tokens, []),
-                               close(InStream).
+                 tokenize(TokenCodes, Tokens),
+                 parser(ParseTree, Tokens, []),
+                 close(InStream),
+							   open('/Users/harshithareddy/Harshitha/SER 502/project/output.ic',write, OutStream),
+							   write(OutStream, ParseTree),
+								 write(OutStream, '.'),
+							   close(OutStream).
+
 
 % Return list of token codes to tokenizer
 tokenCodes(InStream,[]) :- at_end_of_stream(InStream), !.
@@ -42,8 +47,8 @@ getWord([CharCode | RemCodes], alnum, [CharCode], RemCodes).
 % and returns a parse tree
 
 parser(t_parser(X)) --> program(X).
-program(t_commentprog(X, Y)) --> comment(X), ["begin"], block(Y), [";"], ["end"], !.
-program(t_program(X)) --> ["begin"], block(X), [";"], ["end"].
+program(t_commentprog(X, Y)) --> comment(X), [";"], ["begin"], statements(Y), [";"], ["end"], !.
+program(t_program(X)) --> ["begin"], statements(X), [";"], ["end"].
 
 block(t_block(X, Y)) --> allblocks(X), [";"], block(Y).
 block(t_block(X)) --> allblocks(X).
@@ -132,17 +137,31 @@ comparision(t_compare(<=)) --> ["<"], ["="].
 comparision(t_compare(==)) --> ["="], ["="].
 
 % Rules for conditional operators
-condop(t_condop(and)) --> ["and"].
-condop(t_condop(or)) --> ["or"].
+condop(t_condand(and)) --> ["and"].
+condop(t_condor(or)) --> ["or"].
 condnot(t_condnot(not)) -->["not"].
 
 % Rules for print
-printstatement(t_print(X)) --> [print], identifier(X), !.
-printstatement(t_print(X)) --> [print], [X], {string(X)}, !.
-printstatement(t_print(X, Y)) --> [print], [X], {string(X)}, ["+"], identifier(Y), !.
+printstatement(t_printComb(X, Y)) --> ["print"], ["'"], fullPrint(X), ["'"], ["+"], identifier(Y), !.
+printstatement(t_printString(X)) --> ["print"], ["'"], fullPrint(X), ["'"], !.
+printstatement(t_printIdentifier(X)) --> ["print"], identifier(X), !.
+
+fullPrint(t_fullPrint(X)) --> singlePrint(X).
+fullPrint(t_fullPrint(X, Y)) --> singlePrint(X), fullPrint(Y).
+singlePrint(t_singlePrint(X)) --> [X], {string(X)}, !.
+
+
+% Rules for read
+readstatement(t_read(X)) --> identifier(X), ["="], ["read"].
 
 % Rule for comment
-comment(t_comment(C)) --> ["#"], [C], {string(C)}.
+comment(t_comment(C)) --> ["#"], fullComment(C).
+fullComment(t_fullComment(X, Y)) --> singleComment(X), fullComment(Y).
+fullComment(t_fullComment(X)) --> singleComment(X).
+singleComment(t_singleComment(X)) --> [X], {string(X)}.
+
+% Rules for identifiers
+identifier(t_identifier(I)) --> [I], {re_match("^[a-z]+", I)}.
 
 % Rules for datatype
 datatype(t_datatype(int)) --> ["int"].
@@ -150,12 +169,11 @@ datatype(t_datatype(float)) --> ["float"].
 datatype(t_datatype(bool)) --> ["bool"].
 datatype(t_datatype(string)) --> ["string"].
 
-% Rules for identifiers
-identifier(t_identifier(I)) --> [I], {string(I)}.
-
 % Rules for numbers
-data(t_integer(N)) --> [N], {re_match("^[0-9]+", N)}, !.
-data(t_float(F)) --> [F], {re_match("^[0-9]+.[0-9]+", F)}, !.
-data(t_string(S)) --> [S], {string(S)}.
+data(t_integer(N)) --> [N], {re_match("^[0-9]+", N)}.
+data(t_float(F)) --> [F], {re_match("^[0-9]*[.][0-9]+", F)}.
+data(t_string(S)) --> ["'"], [S], {string(S)}, ["'"], !.
 data(t_bool(true)) --> ["true"].
 data(t_bool(false)) --> ["false"].
+
+%=============================================================================================
