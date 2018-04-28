@@ -32,17 +32,21 @@ WORK PROGRESS
 Team member 1 - Harshitha Katpally
 1.Implemented the tokenizer with space, newline and endofFile.
 2.Parser corrected with functionalities and started working on ppt.
+3.Implemented the parser for additional functionality.
 
 Team member 4 - Venkata Sai Shirisha Kakarla
 1.Implemented the complete tokenizer.
 2.Started woking on Interpreter.
+3.Implemented interpreter to support additional features added in language.
 
 Team member 2 - Divya Yadamreddi
 1.Implemented reading the program form the txt file and tokenizing it.
 2.Completed Parser implementation and added few Interpreter functionalities.
+3.Modified interpreter according to the features added in parser.
 
 Team member 3 - Venkata Akhil Madaraju
 1.Started the functionality of Parser and implemented it partially.
 2.Added more functionalities to interpreter and corrected some errors.
+3.Generating an intermediate code file and reading in for runtime.
 
  
