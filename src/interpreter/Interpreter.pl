@@ -4,26 +4,27 @@
 % @purpose Interpreter
 % @date 04/22/2018
 
+%interpreter(FileName) :-  Env = [], write(FileName), evalParser(FileName, Env, EnvOut), write(" "), write(EnvOut), !.
+interpreter(FileName) :- open(FileName, read, InStream), read(InStream, X),
+ 											   close(InStream), Env = [], evalParser(X, Env, EnvOut), write(X).
+
+evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
+
+% Look up the environment to find the value of a variable
 lookup(_,[],0).
 lookup(X,[(X, V)|_],V).
 lookup(X,[_|T],V) :- lookup(X,T,V).
 
+% Update the env with new values of variables
 update(X,V,[],[(X,V)]).
 update(X,V,[(X,_)|T],[(X,V)|T]).
 update(X,V,[H|T],[H|T1]) :- update(X,V,T,T1).
 
-
-%interpreter(FileName) :- open(FileName, read, InStream), write("Open doc"), evalParser(InStream, [], EnvOut).
-interpreter(FileName) :-  Env = [], evalParser(FileName, Env, EnvOut), write(FileName), write(" "), write(EnvOut), !.
-
-evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
-
-% Evaluate Programs
+% Rules to evaluate Programs.
 evalProgram(t_commentprog(_, Y), EnvIn, EnvOut) :- evalStatements(Y, EnvIn, EnvOut).
 evalProgram(t_program(X), EnvIn, EnvOut) :- evalStatements(X, EnvIn, EnvOut).
-%evalProgram(t_functionprog(X, Y), EnvIn, EnvOut) :- evalBlock(X, EnvIn, EnvIn2), evalFunction(Y, EnvIn2, EnvOut).
-%evalProgram(t_commentFunProg(_, Y, Z), EnvIn, EnvOut) :- evalBlock(Y, EnvIn, EnvIn2), evalFunction(Z, EnvIn2, EnvOut).
 
+% Rules to evaluate statements.
 evalStatements(t_multipleStatements(X,Y), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvIn2), evalStatements(Y, EnvIn2, EnvOut), !.
 evalStatements(t_singleStatement(X), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvOut).
 
@@ -35,25 +36,38 @@ evalAllStatements(t_commentStatement(_), EnvIn, EnvIn).
 evalAllStatements(t_readstatement(X), EnvIn, EnvOut) :- evalRead(X, EnvIn, EnvOut).
 evalAllStatements(t_declarationStatement(X), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut).
 
+% Rules to evaluate declaration statement.
 evalDeclaration(t_singleDeclaration(X, Y, Z), EnvIn, EnvOut) :- evalDatatype(X, EnvIn, EnvIn1), evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2),
-														 evalData(Z, DataOutput, EnvIn3, EnvOut), update(IdName, DataOutput, EnvIn2, EnvIn3).
-
+														 																		evalData(Z, DataOutput, EnvIn3, EnvOut), update(IdName, DataOutput, EnvIn2, EnvIn3).
 evalDeclaration(t_singleDeclaration(X, Y), EnvIn, EnvOut) :- evalDatatype(X, EnvIn, EnvIn1),
-																														evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2), update(IdName, 0, EnvIn2, EnvOut).
+																														 evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2), update(IdName, 0, EnvIn2, EnvOut).
 
+% Rules to assign values to variables.
 evalAssign(t_expAssignment(X,Y), EnvIn, EnvOut) :- evalIdentifier(X, _, IdName, EnvIn, EnvIn2),
 																									evalExpression(Y, Output, EnvIn2, EnvIn3), update(IdName, Output, EnvIn3, EnvOut).
 
+% Rules to evaluate if-else statements.
 evalIfelse(t_if(X, Y), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(Y, EnvIn2, EnvOut)); EnvOut = EnvIn.
 evalIfelse(t_ifelse(X, If, Else), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(If, EnvIn2, EnvOut));
 																											evalStatements(Else, EnvIn, EnvOut).
+evalIfelse(t_ifelseif(X, If, Y, Else), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(If, EnvIn2, EnvOut));
+																												 (evalElseifLoop(Y, EnvIn, EnvOut), !);
+																												 (evalStatements(Else, EnvIn, EnvOut)).
 
+evalElseifLoop(t_elseifLoop(X), EnvIn, EnvOut) :- evalElseifLoop1(X, EnvIn, EnvOut).
+evalElseifLoop(t_elseifLoop(X, Y), EnvIn, EnvOut) :- (evalElseifLoop1(X, EnvIn, EnvOut) -> !); evalElseifLoop(Y, EnvIn, EnvOut).
+evalElseifLoop1(t_elseifSingle(X, Elseif), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(Elseif, EnvIn2, EnvOut)); !, false.
+ 																												 																											
+% Rules to evaluate while loop.
 evalWhile(t_while(X, While), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(While, EnvIn2, EnvIn3), evalWhile(t_while(X,While), EnvIn3, EnvOut));
-
-
 																								EnvOut = EnvIn.
 
+% Rules to evaluate conditions.
+% Boolean conditions.
+evalCondition(t_condition(true), EnvIn, EnvIn) :- true.
+evalCondition(t_condition(false), EnvIn, EnvIn) :- false.
 
+% Single conditions.
 evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
 																											 evalCompareEqual(Y),
                                                        evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
@@ -95,7 +109,8 @@ evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutpu
 																											 atom_number(QExp, NExp),
 																											 ((NIdOut =< NExp) -> !; !,false).
 
-																											 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+% not condition.																									 
+evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
 																														evalNot(N), evalCompareEqual(Z),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
 																														atom_string(IdOutput, Qstring),
@@ -135,6 +150,4 @@ evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, Id
 		 																											  atom_string(ExpOutput, QExp),
 		 																											  atom_number(QExp, NExp),
                                                             ((NIdOut > NExp) -> !; !,false).
-
-
 
