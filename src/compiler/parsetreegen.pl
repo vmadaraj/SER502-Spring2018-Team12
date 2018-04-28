@@ -6,14 +6,14 @@
 
 % Read the program from a file and returns the parse tree
 arrow(FileName) :- open(FileName, read, InStream),
-							   tokenCodes(InStream, TokenCodes),
-                 tokenize(TokenCodes, Tokens),
-                 parser(ParseTree, Tokens, []),
-                 close(InStream),
-							   open('output.ic',write, OutStream),
-							   write(OutStream, ParseTree),
-								 write(OutStream, '.'),
-							   close(OutStream).
+							   	 tokenCodes(InStream, TokenCodes),
+                 	 tokenize(TokenCodes, Tokens),
+                 	 parser(ParseTree, Tokens, []),
+                 	 close(InStream),
+							   	 open('output.ic',write, OutStream),
+							   	 write(OutStream, ParseTree),
+								 	 write(OutStream, '.'),
+							   	 close(OutStream).
 
 
 % Return list of token codes to tokenizer
@@ -24,21 +24,20 @@ tokenCodes(InStream, [TokenCode | RemTokens]) :- get_code(InStream, TokenCode),
 % Returns one token at a time
 tokenize([], []).
 tokenize([CharCode | RemCodes], Tokens) :- char_type(CharCode, space), !,
-										   tokenize(RemCodes, Tokens).
+										   										 tokenize(RemCodes, Tokens).
 tokenize([CharCode | CharCodes], [WordString | Tokens]) :- char_type(CharCode, alnum), !,
 													 getWord([CharCode | CharCodes], alnum, WordCodes, RemCodes),
 													 name(Word, WordCodes), atom_string(Word, WordString),
 													 tokenize(RemCodes, Tokens).
 tokenize([CharCode | CharCodes], [CharString | Tokens]) :- !, name(Char, [CharCode]),
                                                            atom_string(Char, CharString),
-													       tokenize(CharCodes, Tokens).
+													       									 				 tokenize(CharCodes, Tokens).
 
 % Checks if next character is new line or space or end of file and returns token
 % upto that point
 getWord([CharCode1, CharCode2 | CharCodes], alnum, [CharCode1 | WordCodes], RemCodes) :-
-				char_type(CharCode2, alnum),
-				!,
-				getWord([CharCode2 | CharCodes], alnum, WordCodes, RemCodes).
+													char_type(CharCode2, alnum), !,
+													getWord([CharCode2 | CharCodes], alnum, WordCodes, RemCodes).
 getWord([CharCode | RemCodes], alnum, [CharCode], RemCodes).
 
 
@@ -67,10 +66,7 @@ declaration(t_singleDeclaration(X, Y, Z)) --> datatype(X), identifier(Y), ["="],
 declaration(t_singleDeclaration(X, Y)) --> datatype(X), identifier(Y).
 
 % Rules for assignment
-% assign(t_multipleAssignments(X, Y)) --> allassign(X), [";"], assign(Y).
-% assign(t_singleAssignment(X)) --> allassign(X).
 assign(t_expAssignment(X, Y)) --> identifier(X), ["="], expression(Y).
-% assign(t_funAssignment(X, Y)) --> identifier(X), ["="], functioncall(Y).
 
 % Rules for expressions
 expression(t_add(X, Y)) --> term(X), ["+"], expression(Y).
@@ -90,8 +86,9 @@ ifelse(t_if(X, If)) --> ["if"], ["("], condition(X), [")"],
 												["{"], statements(If), [";"], ["}"].
 
 ifelse(t_ifelseif(X, If, Y, Else)) --> ["if"], ["("], condition(X), [")"],
-																				 ["{"], statements(If), [";"], ["}"], [";"], elseifLoop(Y), [";"],
-																				 ["else"], ["{"], statements(Else), [";"], ["}"].
+																			 ["{"], statements(If), [";"], ["}"], [";"],
+																			 elseifLoop(Y), [";"],
+																			 ["else"], ["{"], statements(Else), [";"], ["}"].
 
 ifelse(t_ifelse(X,If,Else)) --> ["if"], ["("], condition(X), [")"],
 																["{"], statements(If), [";"], ["}"], [";"],
@@ -100,19 +97,19 @@ ifelse(t_ifelse(X,If,Else)) --> ["if"], ["("], condition(X), [")"],
 elseifLoop(t_elseifLoop(X, Y)) --> elseifLoop1(X), [";"], elseifLoop(Y).
 elseifLoop(t_elseifLoop(X)) --> elseifLoop1(X).
 elseifLoop1(t_elseifSingle(X, Elseif)) --> ["elseif"], ["("], condition(X), [")"],
-																				["{"], statements(Elseif), [";"], ["}"].
+																				   ["{"], statements(Elseif), [";"], ["}"].
 
 % Rules for while
 whileloop(t_while(X,While)) --> ["while"], ["("],condition(X), [")"],
-["{"] , statements(While), [";"], ["}"].
+																["{"] , statements(While), [";"], ["}"].
 
 
 % Rules for condition
 condition(t_singlecond(X, Y, Z)) --> identifier(X), comparision(Y), expression(Z).
-condition(t_multiplecond(X, Y, Z, P, Q)) --> identifier(X), comparision(Y), expression(Z),
-condop(P), condition(Q).
+condition(t_multiplecond(X, Y, Z, P, Q)) --> identifier(X), comparision(Y),
+																						 expression(Z), condop(P), condition(Q).
 condition(t_notcondition(X, Y, Z, P)) --> condnot(X), identifier(Y),
-comparision(Z), expression(P).
+																					comparision(Z), expression(P).
 condition(t_condition(true)) --> ["true"].
 condition(t_condition(false)) --> ["false"].
 
@@ -129,7 +126,8 @@ condop(t_condor(or)) --> ["or"].
 condnot(t_condnot(not)) -->["not"].
 
 % Rules for print
-printstatement(t_printComb(X, Y)) --> ["print"], ["'"], fullPrint(X), ["'"], ["+"], identifier(Y), !.
+printstatement(t_printComb(X, Y)) --> ["print"], ["'"], fullPrint(X), ["'"],
+																			["+"], identifier(Y), !.
 printstatement(t_printString(X)) --> ["print"], ["'"], fullPrint(X), ["'"], !.
 printstatement(t_printIdentifier(X)) --> ["print"], identifier(X), !.
 
