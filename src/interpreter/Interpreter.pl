@@ -5,300 +5,136 @@
 % @date 04/22/2018
 
 lookup(_,[],0).
-
 lookup(X,[(X, V)|_],V).
-
 lookup(X,[_|T],V) :- lookup(X,T,V).
 
-
-
 update(X,V,[],[(X,V)]).
-
 update(X,V,[(X,_)|T],[(X,V)|T]).
-
 update(X,V,[H|T],[H|T1]) :- update(X,V,T,T1).
 
 
+%interpreter(FileName) :- open(FileName, read, InStream), write("Open doc"), evalParser(InStream, [], EnvOut).
+interpreter(FileName) :-  Env = [], evalParser(FileName, Env, EnvOut), write(FileName), write(" "), write(EnvOut), !.
 
 evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
 
+% Evaluate Programs
+evalProgram(t_commentprog(_, Y), EnvIn, EnvOut) :- evalStatements(Y, EnvIn, EnvOut).
+evalProgram(t_program(X), EnvIn, EnvOut) :- evalStatements(X, EnvIn, EnvOut).
+%evalProgram(t_functionprog(X, Y), EnvIn, EnvOut) :- evalBlock(X, EnvIn, EnvIn2), evalFunction(Y, EnvIn2, EnvOut).
+%evalProgram(t_commentFunProg(_, Y, Z), EnvIn, EnvOut) :- evalBlock(Y, EnvIn, EnvIn2), evalFunction(Z, EnvIn2, EnvOut).
 
-
-evalProgram(t_commentprog(_, Y), EnvIn, EnvOut) :- evalBlock(Y, EnvIn, EnvOut).
-
-evalProgram(t_program(X), EnvIn, EnvOut) :- evalBlock(X, EnvIn, EnvOut).
-
-
-
-evalBlock(t_block(X), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut).
-
-evalBlock(t_blockstatements(X, Y), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut), evalStatements(Y, EnvIn, EnvOut).
-
-
-
-evalDeclaration(t_declaration(X), EnvIn, EnvOut) :- evalDeclarationTemp(X, EnvIn, EnvOut).
-
-evalDeclaration(t_declaration(X, Y), EnvIn, EnvOut) :- evalDeclarationTemp(X, EnvIn, EnvOut), evalDeclaration(Y).
-
-evalDeclarationTemp(t_constant(_,Y,Z), EnvIn, EnvOut) :- update(Y, Z, EnvIn, EnvOut).
-
-evalDeclarationTemp(t_variable(_), _EnvIn, _EnvOut).
-
-
-
-evalStatements(t_statements(X), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvOut).
-
-evalStatements(t_statements(X,Y), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvOut), evalStatements(Y, EnvIn, EnvOut).
+evalStatements(t_multipleStatements(X,Y), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvIn2), evalStatements(Y, EnvIn2, EnvOut), !.
+evalStatements(t_singleStatement(X), EnvIn, EnvOut) :- evalAllStatements(X, EnvIn, EnvOut).
 
 evalAllStatements(t_assign(X), EnvIn, EnvOut) :- evalAssign(X, EnvIn, EnvOut).
-
 evalAllStatements(t_ifelseBlock(X), EnvIn, EnvOut) :- evalIfelse(X, EnvIn, EnvOut).
-
 evalAllStatements(t_whileBlock(X), EnvIn, EnvOut) :- evalWhile(X, EnvIn, EnvOut).
-evalAssign(t_assignment(X,Y), EnvIn, EnvOut) :- evalExpression(Y, Output, EnvIn, EnvOut), update(X, Output, EnvIn, EnvOut).
+evalAllStatements(t_printstatement(X), EnvIn, EnvOut) :- evalPrint(X, EnvIn, EnvOut).
+evalAllStatements(t_commentStatement(_), EnvIn, EnvIn).
+evalAllStatements(t_readstatement(X), EnvIn, EnvOut) :- evalRead(X, EnvIn, EnvOut).
+evalAllStatements(t_declarationStatement(X), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut).
+
+evalDeclaration(t_singleDeclaration(X, Y, Z), EnvIn, EnvOut) :- evalDatatype(X, EnvIn, EnvIn1), evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2),
+														 evalData(Z, DataOutput, EnvIn3, EnvOut), update(IdName, DataOutput, EnvIn2, EnvIn3).
+
+evalDeclaration(t_singleDeclaration(X, Y), EnvIn, EnvOut) :- evalDatatype(X, EnvIn, EnvIn1),
+																														evalIdentifier(Y, _, IdName, EnvIn1, EnvIn2), update(IdName, 0, EnvIn2, EnvOut).
+
+evalAssign(t_expAssignment(X,Y), EnvIn, EnvOut) :- evalIdentifier(X, _, IdName, EnvIn, EnvIn2),
+																									evalExpression(Y, Output, EnvIn2, EnvIn3), update(IdName, Output, EnvIn3, EnvOut).
+
+evalIfelse(t_if(X, Y), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(Y, EnvIn2, EnvOut)); EnvOut = EnvIn.
+evalIfelse(t_ifelse(X, If, Else), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(If, EnvIn2, EnvOut));
+																											evalStatements(Else, EnvIn, EnvOut).
+
+evalWhile(t_while(X, While), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) -> evalStatements(While, EnvIn2, EnvIn3), evalWhile(t_while(X,While), EnvIn3, EnvOut));
+
+
+																								EnvOut = EnvIn.
+
+
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareEqual(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut =:= NExp) -> !; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareLess(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut < NExp) -> ! ; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareGreater(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut > NExp) -> !; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareGE(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut >= NExp) -> !; !,false).
+evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																											 evalCompareLE(Y),
+                                                       evalExpression(Z, ExpOutput, EnvIn2, EnvOut),
+																											 atom_string(IdOutput, Qstring),
+																											 atom_number(Qstring, NIdOut),
+																											 atom_string(ExpOutput, QExp),
+																											 atom_number(QExp, NExp),
+																											 ((NIdOut =< NExp) -> !; !,false).
+
+																											 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																														evalNot(N), evalCompareEqual(Z),
+                                                            evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
+																														atom_string(IdOutput, Qstring),
+		 																											  atom_number(Qstring, NIdOut),
+		 																											  atom_string(ExpOutput, QExp),
+		 																											  atom_number(QExp, NExp),
+                                                            ((NIdOut \= NExp) -> !; !,false).
+evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																														evalNot(N), evalCompareGreater(Z),
+                                                            evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
+																														atom_string(IdOutput, Qstring),
+		 																											  atom_number(Qstring, NIdOut),
+		 																											  atom_string(ExpOutput, QExp),
+		 																											  atom_number(QExp, NExp),
+                                                            ((NIdOut =< NExp) ->!; !,false).
+evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																														evalNot(N), evalCompareLess(Z),
+                                                            evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
+																														atom_string(IdOutput, Qstring),
+		 																											  atom_number(Qstring, NIdOut),
+		 																											  atom_string(ExpOutput, QExp),
+		 																											  atom_number(QExp, NExp),
+                                                            ((NIdOut >= NExp) -> !; !,false).
+evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																														evalNot(N), evalCompareGE(Z),
+                                                            evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
+																														atom_string(IdOutput, Qstring),
+		 																											  atom_number(Qstring, NIdOut),
+		 																											  atom_string(ExpOutput, QExp),
+		 																											  atom_number(QExp, NExp),
+                                                            ((NIdOut < NExp) -> !, !,false).
+evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
+																														evalNot(N), (evalCompareLE(Z) -> !),
+                                                            evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
+																														atom_string(IdOutput, Qstring),
+		 																											  atom_number(Qstring, NIdOut),
+		 																											  atom_string(ExpOutput, QExp),
+		 																											  atom_number(QExp, NExp),
+                                                            ((NIdOut > NExp) -> !; !,false).
 
-
-
-evalIfelse(t_if(X, Y), EnvIn, EnvOut) :- evalCondition(X, EnvIn, EnvOut), evalStatements(Y, EnvIn, EnvOut).
-
-evalIfelse(t_if(X, _), EnvIn, EnvOut) :- \+ evalCondition(X, EnvIn, EnvOut), EnvOut is EnvIn.
-
-evalIfelse(t_ifelse(X, If, _), EnvIn, EnvOut) :- evalCondition(X, EnvIn, EnvOut), evalStatements(If, EnvIn, EnvOut).
-
-evalIfelse(t_ifelse(X, _, Else), EnvIn, EnvOut) :- \+ evalCondition(X, EnvIn, EnvOut), evalStatements(Else, EnvIn, EnvOut).
-
-
-
-evalWhile(t_while(X, While), EnvIn, EnvOut) :- evalCondition(X, EnvIn, EnvIn2), evalStatements(While, EnvIn2, EnvIn3),
-
-                                              evalWhile(t_while(X, While), EnvIn3, EnvOut).
-
-evalWhile(t_while(X, _), EnvIn, EnvOut) :- \+ evalCondition(X, EnvIn, EnvOut), EnvOut is EnvIn.
-
-
-
-evalCondition(t_singlecond(X, >, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                      evalExpression(Z, ExpOutput, EnvIn, EnvOut),
-
-                                                      IdOutput > ExpOutput.
-
-evalCondition(t_singlecond(X, <, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                      evalExpression(Z, ExpOutput, EnvIn, EnvOut),
-
-                                                      IdOutput < ExpOutput.
-
-evalCondition(t_singlecond(X, >=, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                      evalExpression(Z, ExpOutput, EnvIn, EnvOut),
-
-                                                      IdOutput >= ExpOutput.
-
-evalCondition(t_singlecond(X, <=, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                      evalExpression(Z, ExpOutput, EnvIn, EnvOut),
-
-                                                      IdOutput =< ExpOutput.
-
-evalCondition(t_singlecond(X, ==, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                      evalExpression(Z, ExpOutput, EnvIn, EnvOut),
-
-                                                      IdOutput =:= ExpOutput.
-
-evalCondition(t_notcondition(not, X, >, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                              evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                              IdOutput =< ExpOutput.
-
-evalCondition(t_notcondition(not, X, <, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                              evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                              IdOutput >= ExpOutput.
-
-evalCondition(t_notcondition(not, X, >=, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                              evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                              IdOutput < ExpOutput.
-
-evalCondition(t_notcondition(not, X, <=, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                              evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                              IdOutput > ExpOutput.
-
-evalCondition(t_notcondition(not, X, ==, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                              evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                              IdOutput \= ExpOutput.
-
-evalCondition(t_multiplecond(X, >, Y, and, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput > ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, <, Y, and, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput < ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, >=, Y, and, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput >= ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, <=, Y, and, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput =< ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, ==, Y, and, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput =:= ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, >, Y, or, _), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                                IdOutput > ExpOutput.
-
-evalCondition(t_multiplecond(X, >, Y, or, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput =< ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, <, Y, or, _), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                                IdOutput < ExpOutput.
-
-evalCondition(t_multiplecond(X, <, Y, or, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput >= ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, >=, Y, or, _), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                                IdOutput >= ExpOutput.
-
-evalCondition(t_multiplecond(X, >=, Y, or, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput < ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, <=, Y, or, _), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                                IdOutput =< ExpOutput.
-
-evalCondition(t_multiplecond(X, <=, Y, or, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput > ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-evalCondition(t_multiplecond(X, ==, Y, or, _), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
-
-                                                                IdOutput =:= ExpOutput.
-
-evalCondition(t_multiplecond(X, ==, Y, or, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, EnvIn, EnvIn2),
-
-                                                                evalExpression(Y, ExpOutput, EnvIn2, EnvIn3),
-
-                                                                IdOutput \= ExpOutput,
-
-                                                                evalCondition(Z, EnvIn3, EnvOut).
-
-
-
-evalIdentifier(t_identifier(X), Output, EnvIn, EnvIn) :- lookup(X, EnvIn, Output).
-
-evalIdentifier(t_identifier(X), Output, EnvIn, EnvIn) :- lookup(X, EnvIn, Output).
-
-
-
-evalExpression(t_add(X,Y), Output, EnvIn, EnvOut) :- evalTerm(X, TermOut, EnvIn, EnvIn2),
-
-                                                     evalExpression(Y, ExpOut, EnvIn2, EnvOut),
-
-                                                     Output is TermOut + ExpOut.
-
-evalExpression(t_sub(X,Y), Output, EnvIn, EnvOut) :- evalTerm(X, TermOut, EnvIn, EnvIn2),
-
-                                                    evalExpression(Y, ExpOut, EnvIn2, EnvOut),
-
-                                                    Output is TermOut - ExpOut.
-
-
-
-evalTerm(t_mul(X,Y), Output, EnvIn, EnvOut) :- evalFactor(X, FactOut, EnvIn, EnvIn2),
-
-                                               evalTerm(Y, TermOut, EnvIn2, EnvOut),
-
-                                              Output is FactOut * TermOut.
-
-evalTerm(t_div(X,Y), Output, EnvIn, EnvOut) :- evalFactor(X, FactOut, EnvIn, EnvIn2),
-
-                                                evalTerm(Y, TermOut, EnvIn2, EnvOut),
-
-                                                Output is FactOut / TermOut.
-
-evalTerm(t_exp(X), Output, EnvIn, EnvOut) :- evalFactor(X, Output, EnvIn, EnvOut).
-
-
-
-evalFactor(t_bracket(X), Output, EnvIn, EnvOut) :- evalExpression(X, Output, EnvIn, EnvOut).
-
-evalFactor(t_id(X), Output, EnvIn, EnvOut) :- evalIdentifier(X, Output, EnvIn, EnvOut).
-
-evalFactor(t_data(X), Output, EnvIn, _) :- evalData(X, Output, EnvIn, EnvOut).
-
-
-
-evalData(t_integer(X), Output, EnvIn, EnvIn) :- Output is X.
-
-evalData(t_float(X), Output, EnvIn, EnvIn) :- Output is X.
-
-evalData(t_string(X), Output, EnvIn, EnvIn) :- Output = X.
-
-evalData(t_bool(X), Output, EnvIn, EnvIn) :- Output = X.
 
 
