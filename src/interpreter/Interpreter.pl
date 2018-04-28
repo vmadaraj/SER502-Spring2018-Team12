@@ -245,4 +245,69 @@ evalCompareGreater(t_greater(>)).
 evalCompareLess(t_lesser(<)).
 evalNot(t_condnot(not)).
 evalAnd(t_condand(and)).
-evalOr(t_condor(or)). 															
+evalOr(t_condor(or)). 
+
+% Rules to evaluate expressions.
+evalExpression(t_add(X,Y), Output, EnvIn, EnvOut) :- evalTerm(X, TermOut, EnvIn, EnvIn2),
+                                                    evalExpression(Y, ExpOut, EnvIn2, EnvOut),
+													atom_string(TermOut, QtermOut),
+													atom_number(QtermOut, NtermOut),
+													atom_string(ExpOut, QexpOut),
+													atom_number(QexpOut, NexpOut),
+                                                    Output is NtermOut + NexpOut.
+
+evalExpression(t_sub(X,Y), Output, EnvIn, EnvOut) :- evalTerm(X, TermOut, EnvIn, EnvIn2),
+                                                    evalExpression(Y, ExpOut, EnvIn2, EnvOut),
+													atom_string(TermOut, QtermOut),
+													atom_number(QtermOut, NtermOut),
+													atom_string(ExpOut, QexpOut),
+													atom_number(QexpOut, NexpOut),
+                                                    Output is NtermOut - NexpOut.
+
+evalExpression(t_exp(X), Output, EnvIn, EnvOut) :- evalTerm(X, Output, EnvIn, EnvOut).
+
+evalTerm(t_mul(X,Y), Output, EnvIn, EnvOut) :- evalFactor(X, FactOut, EnvIn, EnvIn2),
+                                               evalTerm(Y, TermOut, EnvIn2, EnvOut),
+												atom_string(TermOut, QtermOut),
+												atom_number(QtermOut, NtermOut),
+												atom_string(FactOut, QfactOut),
+												atom_number(QfactOut, NfactOut),
+                                               Output is NfactOut * NtermOut.
+evalTerm(t_div(X,Y), Output, EnvIn, EnvOut) :- evalFactor(X, FactOut, EnvIn, EnvIn2),
+                                               evalTerm(Y, TermOut, EnvIn2, EnvOut),
+												atom_string(TermOut, QtermOut),
+ 												atom_number(QtermOut, NtermOut),
+ 												atom_string(FactOut, QfactOut),
+ 												atom_number(QfactOut, NfactOut),
+                                               Output is NfactOut / NtermOut.
+evalTerm(t_exp(X), Output, EnvIn, EnvOut) :- evalFactor(X, Output, EnvIn, EnvOut).
+
+evalFactor(t_bracket(X), Output, EnvIn, EnvOut) :- evalExpression(X, Output, EnvIn, EnvOut).
+evalFactor(t_id(X), Output, EnvIn, EnvOut) :- evalIdentifier(X, Output, _, EnvIn, EnvOut).
+evalFactor(t_data(X), Output, EnvIn, EnvOut) :- evalData(X, Output, EnvIn, EnvOut).
+
+evalData(t_integer(X), Output, EnvIn, EnvIn) :- Output = X, !.
+evalData(t_float(X), Output, EnvIn, EnvIn) :- Output = X, !.
+evalData(t_string(X), Output, EnvIn, EnvIn) :- Output = X, !.
+evalData(t_bool(X), Output, EnvIn, EnvIn) :- Output = X, !.
+
+evalIdentifier(t_identifier(X), Output, IdName, EnvIn, EnvIn) :- lookup(X, EnvIn, Output), IdName = X.
+
+evalDatatype(t_datatype(int), EnvIn, EnvIn).
+evalDatatype(t_datatype(bool), EnvIn, EnvIn).
+evalDatatype(t_datatype(string), EnvIn, EnvIn).
+
+% Rules to evaluate 'read'.
+evalRead(t_read(X), EnvIn, EnvOut) :- read(Term), evalIdentifier(X, _, IdName, EnvIn, EnvIn2), update(IdName, Term, EnvIn2, EnvOut).
+
+% Rules to evaluate print statements.
+evalPrint(t_printComb(X, Y), EnvIn, EnvOut) :- evalFullPrint(X, EnvIn, EnvIn2),
+																							 evalIdentifier(Y, Output, _, EnvIn2, EnvOut),
+																							 write(Output).
+evalPrint(t_printString(X), EnvIn, EnvOut) :- evalFullPrint(X, EnvIn, EnvOut).
+evalPrint(t_printIdentifier(X), EnvIn, EnvOut) :- evalIdentifier(X, Output, _, EnvIn, EnvOut),
+ 																									write(Output), write(" ").
+evalFullPrint(t_fullPrint(X, Y), EnvIn, EnvOut) :- evalSinglePrint(X, EnvIn, EnvIn2),
+																									 evalFullPrint(Y, EnvIn2, EnvOut).
+evalFullPrint(t_fullPrint(X), EnvIn, EnvOut) :- evalSinglePrint(X, EnvIn, EnvOut).
+evalSinglePrint(t_singlePrint(X), EnvIn, EnvIn) :- write(X), write(" ").															

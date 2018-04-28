@@ -47,6 +47,6 @@ Team member 2 - Divya Yadamreddi
 Team member 3 - Venkata Akhil Madaraju
 1.Started the functionality of Parser and implemented it partially.
 2.Added more functionalities to interpreter and corrected some errors.
-3.Generating an intermediate code file and reading in for runtime.
+3.Added print functionality , Generating an intermediate code file and reading in for runtime.
 
  
