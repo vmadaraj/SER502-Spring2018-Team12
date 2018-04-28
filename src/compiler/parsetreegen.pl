@@ -10,7 +10,7 @@ arrow(FileName) :- open(FileName, read, InStream),
                  tokenize(TokenCodes, Tokens),
                  parser(ParseTree, Tokens, []),
                  close(InStream),
-							   open('/Users/harshithareddy/Harshitha/SER 502/project/output.ic',write, OutStream),
+							   open('output.ic',write, OutStream),
 							   write(OutStream, ParseTree),
 								 write(OutStream, '.'),
 							   close(OutStream).
@@ -50,33 +50,27 @@ parser(t_parser(X)) --> program(X).
 program(t_commentprog(X, Y)) --> comment(X), [";"], ["begin"], statements(Y), [";"], ["end"], !.
 program(t_program(X)) --> ["begin"], statements(X), [";"], ["end"].
 
-block(t_block(X, Y)) --> allblocks(X), [";"], block(Y).
-block(t_block(X)) --> allblocks(X).
-allblocks(t_printblock(X)) --> printstatement(X).
-allblocks(t_declarationblock(X)) --> declaration(X).
-allblocks(t_statementsblock(X)) --> statements(X).
-
 % Rules for statements
-statements(t_statements(X, Y)) --> allstatements(X), [";"], statements(Y).
-statements(t_statements(X)) --> allstatements(X).
+statements(t_multipleStatements(X, Y)) --> allstatements(X), [";"], statements(Y).
+statements(t_singleStatement(X)) --> allstatements(X).
 allstatements(t_printstatement(X)) --> printstatement(X).
+allstatements(t_readstatement(X)) --> readstatement(X).
+allstatements(t_commentStatement(X)) --> comment(X).
+allstatements(t_declarationStatement(X)) --> declaration(X).
 allstatements(t_assign(X)) --> assign(X).
 allstatements(t_ifelseBlock(X)) --> ifelse(X).
-allstatements(t_whileBlock(X)) --> while(X).
-allstatements(t_functioncallstatement(X)) --> functioncall(X).
+allstatements(t_whileBlock(X)) --> whileloop(X).
 
 
 % Rules for declarations
-declaration(t_declaration(X, Y)) --> declarationtemp(X), [";"], declaration(Y).
-declaration(t_declaration(X)) --> declarationtemp(X).
-declarationtemp(t_constant(X, Y, Z)) --> datatype(X), identifier(Y), ["="], data(Z).
-declarationtemp(t_variable(X, Y)) --> datatype(X), identifier(Y).
+declaration(t_singleDeclaration(X, Y, Z)) --> datatype(X), identifier(Y), ["="], data(Z), !.
+declaration(t_singleDeclaration(X, Y)) --> datatype(X), identifier(Y).
 
 % Rules for assignment
-assign(t_assignment(X, Y)) --> allassign(X), [";"], assign(Y).
-assign(t_assignment(X)) --> allassign(X).
-allassign(t_allassignment(X, Y)) --> identifier(X), ["="], expression(Y).
-allassign(t_allassignment(X, Y)) --> identifier(X), ["="], functioncall(Y).
+% assign(t_multipleAssignments(X, Y)) --> allassign(X), [";"], assign(Y).
+% assign(t_singleAssignment(X)) --> allassign(X).
+assign(t_expAssignment(X, Y)) --> identifier(X), ["="], expression(Y).
+% assign(t_funAssignment(X, Y)) --> identifier(X), ["="], functioncall(Y).
 
 % Rules for expressions
 expression(t_add(X, Y)) --> term(X), ["+"], expression(Y).
@@ -93,32 +87,25 @@ factor(t_data(X)) --> data(X).
 
 % Rules for if-else
 ifelse(t_if(X, If)) --> ["if"], ["("], condition(X), [")"],
-["{"], statements(If), [";"], ["}"].
+												["{"], statements(If), [";"], ["}"].
+
+ifelse(t_ifelseif(X, If, Y, Else)) --> ["if"], ["("], condition(X), [")"],
+																				 ["{"], statements(If), [";"], ["}"], [";"], elseifLoop(Y), [";"],
+																				 ["else"], ["{"], statements(Else), [";"], ["}"].
+
 ifelse(t_ifelse(X,If,Else)) --> ["if"], ["("], condition(X), [")"],
-["{"], statements(If), [";"], ["}"],
-["else"], ["{"], statements(Else), [";"], ["}"].
+																["{"], statements(If), [";"], ["}"], [";"],
+															  ["else"], ["{"], statements(Else), [";"], ["}"].
+
+elseifLoop(t_elseifLoop(X, Y)) --> elseifLoop1(X), [";"], elseifLoop(Y).
+elseifLoop(t_elseifLoop(X)) --> elseifLoop1(X).
+elseifLoop1(t_elseifSingle(X, Elseif)) --> ["elseif"], ["("], condition(X), [")"],
+																				["{"], statements(Elseif), [";"], ["}"].
 
 % Rules for while
-while(t_while(X,While)) --> ["while"], ["("],condition(X), [")"],
+whileloop(t_while(X,While)) --> ["while"], ["("],condition(X), [")"],
 ["{"] , statements(While), [";"], ["}"].
 
-% Rules for function call
-functioncall(t_functioncall(X, Y)) --> identifier(X), ["("], parameters(Y), [")"].
-
-% Rules for function declaration
-function(t_function(X, Y, Z, P)) --> ["function"], datatype(X), identifier(Y), ["("],
-															  arguments(Z), [")"], ["{"], statements(P), ["}"].
-
-% Rules for arguments
-arguments(t_arguments(X, Y)) --> allarguments(X), [","], arguments(Y).
-arguments(t_arguments(X)) --> allarguments(X).
-allarguments(t_allarguments(X, Y)) --> datatype(X), identifier(Y).
-
-% Rules for parameters
-parameters(t_parameters(X, Y)) --> allparameters(X), [","], parameters(Y).
-parameters(t_parameters(X)) --> allparameters(X).
-allparameters(t_allparameters(X)) --> identifier(X).
-allparameters(t_allparameters(X)) --> data(X).
 
 % Rules for condition
 condition(t_singlecond(X, Y, Z)) --> identifier(X), comparision(Y), expression(Z).
@@ -130,11 +117,11 @@ condition(t_condition(true)) --> ["true"].
 condition(t_condition(false)) --> ["false"].
 
 % Rules for comparision
-comparision(t_compare(>)) --> [">"].
-comparision(t_compare(<)) --> ["<"].
-comparision(t_compare(>=)) --> [">"], ["="].
-comparision(t_compare(<=)) --> ["<"], ["="].
-comparision(t_compare(==)) --> ["="], ["="].
+comparision(t_greater(>)) --> [">"].
+comparision(t_lesser(<)) --> ["<"].
+comparision(t_greaterequal(>=)) --> [">"], ["="].
+comparision(t_lesserequal(<=)) --> ["<"], ["="].
+comparision(t_equal(==)) --> ["="], ["="].
 
 % Rules for conditional operators
 condop(t_condand(and)) --> ["and"].
@@ -165,13 +152,11 @@ identifier(t_identifier(I)) --> [I], {re_match("^[a-z]+", I)}.
 
 % Rules for datatype
 datatype(t_datatype(int)) --> ["int"].
-datatype(t_datatype(float)) --> ["float"].
 datatype(t_datatype(bool)) --> ["bool"].
 datatype(t_datatype(string)) --> ["string"].
 
 % Rules for numbers
 data(t_integer(N)) --> [N], {re_match("^[0-9]+", N)}.
-data(t_float(F)) --> [F], {re_match("^[0-9]*[.][0-9]+", F)}.
 data(t_string(S)) --> ["'"], [S], {string(S)}, ["'"], !.
 data(t_bool(true)) --> ["true"].
 data(t_bool(false)) --> ["false"].
