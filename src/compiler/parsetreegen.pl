@@ -10,7 +10,7 @@ arrow(FileName) :- open(FileName, read, InStream),
                  tokenize(TokenCodes, Tokens),
                  parser(ParseTree, Tokens, []),
                  close(InStream),
-							   open('/Users/harshithareddy/Harshitha/SER 502/project/output.ic',write, OutStream),
+							   open('output.ic',write, OutStream),
 							   write(OutStream, ParseTree),
 								 write(OutStream, '.'),
 							   close(OutStream).
