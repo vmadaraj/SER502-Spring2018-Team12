@@ -21,7 +21,7 @@ Runtime steps
 2. Copy the files parsetreegen.pl, interpreter.pl in the same folder where you have the sample programs.
 3. Open the SWI-Prolog runtime environment.
 4. Execute both the files parsetreegen.pl and interpreter.pl.
-5. Run the predicate arrow('<INPUTFILEPATH>'). The .ic file is generated in the same directory.
+5. Run the predicate arrow('INPUTFILEPATH'). The .ic file is generated in the same directory.
 6. Run the predicate runArrow('<.icfilepath>').
 
 Requirements Addressed
