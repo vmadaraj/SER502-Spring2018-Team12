@@ -27,7 +27,7 @@ Runtime steps
 Requirements Addressed
 ------------------------
 1. Implemented operators and primitive types boolean, int, string.
-2. Support for Assigment statments and evealuation of Assignments.
+2. Support for Assigment statments and evaluation of expressions.
 3. if-then-else construct to make decisions.
 4. while statement to do iterative execution.
 5. Generates intermediate code (parsetree) and saves it to a .ic file.
@@ -35,18 +35,18 @@ Requirements Addressed
 
 Extra Features Added
 ---------------------
-1. Single line comments can be used through out the code using # .
+1. Single line comments can be made at the begining of the code using # .
 2. Conditional operators 'and', 'or', 'not' are implemented.
-3. Declaration of the variables can be done at any point in the code.
-4. Print statements can be used as 
+3. Comparision operators ‘>’ | ‘<’ | ‘<=’ | ‘>=’ | ‘==’ are implemented.
+4. Declaration of the variables can be done at any point in the code.
+5. Print statements can be used as 
 	a. "print '<ONLY_STRING>'" 
 	b. "print <IDENTIFIER>" 
-	c. "print '<STRING>'+<IDENTIFIER>".
-5. IFELSE
+6. IFELSE
 	a. Nested if-else can be used - if, elseif, else.
 	b. Boolean values can be used in the conditions.
 	c. Multiple conditions can be checked using and/or.
-6. Reading the user inputs from the console.
+7. Reading the user inputs from the console.
  
 
 Example Run
@@ -69,11 +69,13 @@ Open SWI-Prolog runtime environment.
 
 Restrictions on the code
 --------------------------
-1. Print statements cannot have Capital letters.
+1. Print statements cannot have Capital letters and only space.
+2. No operations can be on string.
+3. User input needs to be followed by a '.'.
 
 Team Members
 -------------
-1. Harshitha Katpally 				    hkatpall@asu.edu
-2. Divya Yadamreddi 				      dyadamre@asu.edu
+1. Harshitha Katpally 				  hkatpall@asu.edu
+2. Divya Yadamreddi 				  dyadamre@asu.edu
 3. Venkata Akhil Madaraju 			  vmadaraj@asu.edu
-4. Venkata Sai Shirisha Kakarla 	vkakarla@asu.edu 
+4. Venkata Sai Shirisha Kakarla 	          vkakarla@asu.edu 
