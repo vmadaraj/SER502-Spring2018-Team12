@@ -7,7 +7,7 @@ int b = 1;
 int c;
 print 'enter a number';
 n = read;
-print 'fibonacci Series :';
+print 'fibonacci series :';
 if (n == 0)
 {
 print n;
