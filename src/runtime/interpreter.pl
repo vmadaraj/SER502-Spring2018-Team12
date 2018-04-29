@@ -64,7 +64,7 @@ evalWhile(t_while(X, While), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) 
 
 % Rules to evaluate conditions.
 % Boolean conditions.
-evalCondition(t_boolcondition(X), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2), (((=(IdOutput,true)) -> !, true); !, false).
+evalCondition(t_boolcondition(X), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvOut), (((=(IdOutput,true)) -> !, true); !, false).
 evalCondition(t_condition(true), EnvIn, EnvIn) :- true.
 evalCondition(t_condition(false), EnvIn, EnvIn) :- false.
 
