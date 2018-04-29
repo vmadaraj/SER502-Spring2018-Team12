@@ -56,7 +56,6 @@ statements(t_multipleStatements(X, Y)) --> allstatements(X), [";"], statements(Y
 statements(t_singleStatement(X)) --> allstatements(X).
 allstatements(t_printstatement(X)) --> printstatement(X).
 allstatements(t_readstatement(X)) --> readstatement(X).
-allstatements(t_commentStatement(X)) --> comment(X).
 allstatements(t_declarationStatement(X)) --> declaration(X).
 allstatements(t_assign(X)) --> assign(X).
 allstatements(t_ifelseBlock(X)) --> ifelse(X).
