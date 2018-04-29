@@ -1,7 +1,7 @@
 # SER502-Spring2018-Team12
 Compiler and Virtual Machine for a Programming Language
 
-The language is called 'arrow'. The link of the youtube video is ""
+The language is called 'arrow'. The link of the youtube video is "https://youtu.be/0iP0kMGOQz4"
 
 Project Structure
 -----------------
