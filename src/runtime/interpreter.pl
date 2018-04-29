@@ -6,7 +6,7 @@
 
 :- style_check(-singleton).
 
-runArrow(FileName) :- open(FileName, read, InStream), read(InStream, X), write(X),
+runArrow(FileName) :- open(FileName, read, InStream), read(InStream, X),
 		      close(InStream), Env = [], evalParser(X, Env, EnvOut).
 
 evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
@@ -33,7 +33,6 @@ evalAllStatements(t_assign(X), EnvIn, EnvOut) :- evalAssign(X, EnvIn, EnvOut).
 evalAllStatements(t_ifelseBlock(X), EnvIn, EnvOut) :- evalIfelse(X, EnvIn, EnvOut).
 evalAllStatements(t_whileBlock(X), EnvIn, EnvOut) :- evalWhile(X, EnvIn, EnvOut).
 evalAllStatements(t_printstatement(X), EnvIn, EnvOut) :- evalPrint(X, EnvIn, EnvOut).
-evalAllStatements(t_commentStatement(_), EnvIn, EnvIn).
 evalAllStatements(t_readstatement(X), EnvIn, EnvOut) :- evalRead(X, EnvIn, EnvOut).
 evalAllStatements(t_declarationStatement(X), EnvIn, EnvOut) :- evalDeclaration(X, EnvIn, EnvOut).
 
