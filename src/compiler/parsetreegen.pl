@@ -4,6 +4,7 @@
 % @purpose Tokenizer to tokenize the program, and parser to generate the parse tree
 % @date 04/17/2018
 
+:- style_check(-singleton).
 % Read the program from a file and returns the parse tree
 arrow(FileName) :- open(FileName, read, InStream),
 		   tokenCodes(InStream, TokenCodes),
@@ -109,6 +110,7 @@ condition(t_multiplecond(X, Y, Z, P, Q)) --> identifier(X), comparision(Y),
 					     expression(Z), condop(P), condition(Q).
 condition(t_notcondition(X, Y, Z, P)) --> condnot(X), identifier(Y),
 					  comparision(Z), expression(P).
+condition(t_boolcondition(X)) --> identifier(X).
 condition(t_condition(true)) --> ["true"].
 condition(t_condition(false)) --> ["false"].
 

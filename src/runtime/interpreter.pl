@@ -4,9 +4,10 @@
 % @purpose Interpreter
 % @date 04/22/2018
 
-%interpreter(FileName) :-  Env = [], write(FileName), evalParser(FileName, Env, EnvOut), write(" "), write(EnvOut), !.
-runArrow(FileName) :- open(FileName, read, InStream), read(InStream, X),
-		      close(InStream), Env = [], evalParser(X, Env, EnvOut), write(X).
+:- style_check(-singleton).
+
+runArrow(FileName) :- open(FileName, read, InStream), read(InStream, X), write(X),
+		      close(InStream), Env = [], evalParser(X, Env, EnvOut).
 
 evalParser(t_parser(K), EnvIn, EnvOut) :- evalProgram(K, EnvIn, EnvOut).
 
@@ -64,6 +65,7 @@ evalWhile(t_while(X, While), EnvIn, EnvOut) :- (evalCondition(X, EnvIn, EnvIn2) 
 
 % Rules to evaluate conditions.
 % Boolean conditions.
+evalCondition(t_boolcondition(X), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2), (((=(IdOutput,true)) -> !, true); !, false).
 evalCondition(t_condition(true), EnvIn, EnvIn) :- true.
 evalCondition(t_condition(false), EnvIn, EnvIn) :- false.
 
@@ -109,7 +111,7 @@ evalCondition(t_singlecond(X, Y, Z), EnvIn, EnvOut) :- evalIdentifier(X, IdOutpu
 	    					       atom_number(QExp, NExp),
 						       ((NIdOut =< NExp) -> !; !,false).
 
-% not condition.																									 
+% not condition																								 
 evalCondition(t_notcondition(N, X, Z, Y), EnvIn, EnvOut) :- evalIdentifier(X, IdOutput, _, EnvIn, EnvIn2),
 							    evalNot(N), evalCompareEqual(Z),
                                                             evalExpression(Y, ExpOutput, EnvIn2, EnvOut),
